@@ -1,0 +1,16 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://bjn0tx37vvfn5"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_pvmsq"]
+noise_type = 2
+frequency = 0.05
+cellular_distance_function = 2
+cellular_jitter = 0.0
+cellular_return_type = 0
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_3cvol"]
+noise = SubResource("FastNoiseLite_pvmsq")
+
+[resource]
+albedo_color = Color(0.73226565, 0.38261154, 0.69746006, 1)
+albedo_texture = SubResource("NoiseTexture2D_3cvol")
+uv1_triplanar = true
