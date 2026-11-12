@@ -1,8 +1,10 @@
 [gd_scene format=3 uid="uid://cv3vkw4fvs7mw"]
 
-[ext_resource type="Material" uid="uid://bjn0tx37vvfn5" path="res://chess.tres" id="1_3253y"]
-[ext_resource type="PackedScene" uid="uid://b76dyg7nougxa" path="res://Player.tscn" id="1_ulcgi"]
-[ext_resource type="Script" uid="uid://dkj6am6l70wun" path="res://isometric_camera.gd" id="2_nxogm"]
+[ext_resource type="Material" uid="uid://bjn0tx37vvfn5" path="res://assets/materials/chess.tres" id="1_4msxo"]
+[ext_resource type="Script" uid="uid://dkj6am6l70wun" path="res://features/entities/player/isometric_camera.gd" id="3_4msxo"]
+[ext_resource type="PackedScene" uid="uid://iwxiwgkcn34t" path="res://features/world_items/world_item.tscn" id="3_5fb3c"]
+[ext_resource type="PackedScene" uid="uid://b76dyg7nougxa" path="res://features/entities/player/Player.tscn" id="4_gjmho"]
+[ext_resource type="Resource" uid="uid://0u06hjygqika" path="res://features/items/apple.tres" id="4_t7and"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_pvmsq"]
 noise_type = 2
@@ -20,7 +22,7 @@ albedo_texture = SubResource("NoiseTexture2D_3cvol")
 uv1_triplanar = true
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_3cvol"]
-material = ExtResource("1_3253y")
+material = ExtResource("1_4msxo")
 size = Vector2(50, 50)
 
 [sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_pvmsq"]
@@ -64,43 +66,24 @@ material = SubResource("StandardMaterial3D_3253y")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.8034134, 0.39278412, -9.058945)
 layers = 2
 use_collision = true
-collision_layer = 2
 size = Vector3(2, 0.7421875, 1)
 material = SubResource("StandardMaterial3D_3253y")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=1059244384]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D" unique_id=1934816590]
+layers = 3
 mesh = SubResource("PlaneMesh_3cvol")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=189003399]
 shape = SubResource("WorldBoundaryShape3D_pvmsq")
 
-[node name="CharacterBody3D" parent="." unique_id=2102225897 instance=ExtResource("1_ulcgi")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9631014, 0.07776964, -1.458374)
-collision_mask = 3
-
-[node name="AreaLight3D" type="OmniLight3D" parent="CharacterBody3D" unique_id=202764330]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.71620095, 0)
-light_color = Color(0.45456213, 0.6775998, 0.50153255, 1)
-light_energy = 8.238
-light_cull_mask = 4294966275
-omni_range = 4.769
-omni_attenuation = 0.1
-
-[node name="Camera3D" type="Camera3D" parent="." unique_id=175583808 node_paths=PackedStringArray("target")]
-transform = Transform3D(0.70710677, -0.40860704, 0.5770964, 0, 0.8161376, 0.5778576, -0.70710677, -0.40860704, 0.5770964, 10, 10, 10)
-projection = 1
-size = 14.721
-script = ExtResource("2_nxogm")
-target = NodePath("../CharacterBody3D")
-offset = Vector3(10, 10, 10)
-
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=497133277]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 13.386694, 0)
+transform = Transform3D(1, 0, 0, 0, 0.840858, 0.54125583, 0, -0.54125583, 0.840858, 0, 13.386694, 13.359939)
 
 [node name="StaticBody3D2" type="StaticBody3D" parent="." unique_id=1886061669]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 4.271676, -0.217731, -2.4676187)
+collision_layer = 2
 
 [node name="MeshInstance3D4" type="MeshInstance3D" parent="StaticBody3D2" unique_id=493041349]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0142956, 1.3859315, -0.39636707)
@@ -121,3 +104,28 @@ shape = SubResource("ConvexPolygonShape3D_pvug8")
 [node name="MeshInstance3D2" type="MeshInstance3D" parent="StaticBody3D2" unique_id=927343862]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0000801, 0.6556003, -1.4358535)
 mesh = SubResource("BoxMesh_m7jmp")
+
+[node name="WorldItem" parent="." unique_id=1849419957 instance=ExtResource("3_5fb3c")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.877357, 0.297032, 0)
+item_data = ExtResource("4_t7and")
+amount = 5
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=175583808 node_paths=PackedStringArray("target")]
+transform = Transform3D(0.7071068, -0.40860704, 0.5770964, 0, 0.8161376, 0.5778576, -0.7071068, -0.40860704, 0.5770964, 10, 10, 10)
+projection = 1
+size = 14.721
+script = ExtResource("3_4msxo")
+target = NodePath("../CharacterBody3D")
+offset = Vector3(10, 10, 10)
+
+[node name="CharacterBody3D" parent="." unique_id=2102225897 instance=ExtResource("4_gjmho")]
+collision_layer = 1
+collision_mask = 3
+
+[node name="AreaLight3D" type="OmniLight3D" parent="CharacterBody3D" unique_id=202764330]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8815179, 0)
+light_color = Color(0.45456213, 0.6775998, 0.50153255, 1)
+light_energy = 8.238
+light_cull_mask = 4294966275
+omni_range = 4.769
+omni_attenuation = 0.1

@@ -4,7 +4,7 @@ extends CharacterBody3D
 const WALK_SPEED = 5.0
 
 # Parametry Dasha (Zrywu)
-const DASH_SPEED = 18.0
+const DASH_SPEED = 18
 const DASH_DURATION = 0.15
 const MAX_DASH_CHARGES = 2
 const DASH_COOLDOWN = 3.0
