@@ -1,0 +1,53 @@
+[gd_scene format=3 uid="uid://c7tgqwd0f4o4g"]
+
+[ext_resource type="Script" uid="uid://cgsoq4m6hivg0" path="res://systems/dungeon/dungeon_host.gd" id="1_host"]
+[ext_resource type="Script" uid="uid://b512mes3n711e" path="res://systems/dungeon/dungeon_builder.gd" id="2_builder"]
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 1
+background_color = Color(0.08, 0.09, 0.11, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.6, 0.65, 0.7, 1)
+ambient_light_energy = 0.4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_g4v7s"]
+top_radius = 40.0
+bottom_radius = 40.0
+
+[node name="DungeonTest" type="Node3D" unique_id=1648748648]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1294967752]
+environment = SubResource("Environment_1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1798872119]
+transform = Transform3D(0.866025, -0.353553, 0.353553, 0, 0.707107, 0.707107, -0.5, -0.612372, 0.612372, 0, 20, 0)
+shadow_enabled = true
+
+[node name="DungeonHost" type="Node3D" parent="." unique_id=994656621]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0, -281.25482)
+script = ExtResource("1_host")
+seed_value = 0
+room_count = 35
+room_min_size = Vector2i(10, 10)
+room_max_size = Vector2i(20, 20)
+inside_rad = 20.0
+outside_rad = 250.0
+angle_offset = 1.0
+room_padding = 10
+extra_corridors = 0
+corridor_noise_amplitude = 1.0
+corridor_noise_frequency = 1.0
+extra_doors_max = 3
+door_spacing = 10
+
+[node name="DungeonBuilder" type="Node3D" parent="DungeonHost" unique_id=825073624]
+script = ExtResource("2_builder")
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=540025387]
+transform = Transform3D(0.707107, -0.40558, 0.579228, 0, 0.819152, 0.573576, -0.707107, -0.40558, 0.579228, 28, 36, 28)
+visible = false
+current = true
+fov = 50.0
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1775572287]
+mesh = SubResource("CylinderMesh_g4v7s")
