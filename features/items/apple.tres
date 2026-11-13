@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" format=3 uid="uid://0u06hjygqika"]
+
+[ext_resource type="Script" uid="uid://b0kqsl0p77ydc" path="res://features/items/item_data.gd" id="1_ag7gk"]
+[ext_resource type="Texture2D" uid="uid://voxh8flm5xfw" path="res://assets/graphics/icons/Sztabka_%3Felaza.webp" id="1_nvmnu"]
+
+[resource]
+script = ExtResource("1_ag7gk")
+id = &"apple"
+item_name = "Jabłko"
+description = "Jabłko, ale to żelazo"
+icon = ExtResource("1_nvmnu")
+weight = 10.0
+value = 100
+metadata/_custom_type_script = "uid://b0kqsl0p77ydc"

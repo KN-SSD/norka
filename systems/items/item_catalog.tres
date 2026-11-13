@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ItemCatalog" format=3 uid="uid://shx6t6nst22d"]
+
+[ext_resource type="Script" uid="uid://b0kqsl0p77ydc" path="res://features/items/item_data.gd" id="1_m36yc"]
+[ext_resource type="Resource" uid="uid://0u06hjygqika" path="res://features/items/apple.tres" id="2_3cy83"]
+[ext_resource type="Script" uid="uid://dl0o8rucmaxca" path="res://systems/items/item_catalog.gd" id="2_jugc1"]
+
+[resource]
+script = ExtResource("2_jugc1")
+items = Array[ExtResource("1_m36yc")]([ExtResource("2_3cy83")])
+metadata/_custom_type_script = "uid://dl0o8rucmaxca"

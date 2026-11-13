@@ -1,0 +1,38 @@
+[gd_scene format=3 uid="uid://doxqvshgdc8v5"]
+
+[ext_resource type="Script" uid="uid://d02a6wwbdg11y" path="res://ui/inventory/inventory_row.gd" id="1_rn8e1"]
+
+[sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_j0ti6"]
+
+[node name="InventoryRow" type="HBoxContainer" unique_id=808031460]
+custom_minimum_size = Vector2(0, 40)
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+script = ExtResource("1_rn8e1")
+
+[node name="Icon" type="TextureRect" parent="." unique_id=937325379]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+texture = SubResource("PlaceholderTexture2D_j0ti6")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Name" type="Label" parent="." unique_id=2122946680]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Item_Name"
+
+[node name="Amount" type="Label" parent="." unique_id=1135838436]
+layout_mode = 2
+text = "10"
+horizontal_alignment = 2
+
+[node name="Weight" type="Label" parent="." unique_id=1257416288]
+layout_mode = 2
+text = "20"
+horizontal_alignment = 2
+
+[node name="Drop" type="Button" parent="." unique_id=1900112233]
+custom_minimum_size = Vector2(56, 0)
+layout_mode = 2
+text = "Drop"
