@@ -15,8 +15,6 @@ var max_weight: float = 50.0
 @export_range(0.1, 1.0, 0.05)
 var minimum_speed_multiplier: float = 0.5
 
-@export var item_database: ItemDatabase
-
 var _stacks: Array[InventoryStack] = []
 
 
@@ -212,10 +210,6 @@ func to_save_data() -> Dictionary:
 
 func load_save_data(data: Dictionary) -> bool:
 
-	if item_database == null:
-		push_error("Inventory: ItemDatabase is missing.")
-		return false
-
 	var saved_items: Variant = data.get("items", [])
 
 	if typeof(saved_items) != TYPE_ARRAY:
@@ -240,7 +234,7 @@ func load_save_data(data: Dictionary) -> bool:
 		if amount <= 0:
 			continue
 
-		var item_data := item_database.get_item(item_id)
+		var item_data := ItemDatabase.get_item(item_id)
 
 		if item_data == null:
 			push_warning(
