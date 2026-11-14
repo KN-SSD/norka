@@ -17,8 +17,8 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-LimboConsole="*uid://dyxornv8vwibg"
 ItemDatabase="*uid://d2ha8fk12sjfi"
+LimboConsole="*uid://dyxornv8vwibg"
 
 [display]
 
@@ -27,7 +27,7 @@ window/stretch/aspect="expand"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/autosaver/plugin.cfg", "res://addons/limbo_console/plugin.cfg", "res://addons/script-ide/plugin.cfg")
+enabled=PackedStringArray("res://addons/limbo_console/plugin.cfg")
 
 [global_group]
 

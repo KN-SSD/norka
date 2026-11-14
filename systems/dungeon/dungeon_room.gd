@@ -2,6 +2,7 @@ class_name DungeonRoom
 extends RefCounted
 
 var rect: Rect2i = Rect2i()
+var polygon: PackedVector2Array
 var doors: Array[DungeonDoor] = []
 
 

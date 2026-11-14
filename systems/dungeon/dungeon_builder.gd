@@ -46,7 +46,7 @@ func build(data: DungeonData) -> void:
 		elif room_index == farthest_i:
 			color = room_farthest_color
 
-		_root.add_child(_make_box(room.rect, color, "Room"))
+		_root.add_child(_make_polygon_room(room, color))
 
 		if show_door_indicators:
 			_root.add_child(
@@ -134,6 +134,100 @@ func _cell_to_world_center(cell: Vector2i) -> Vector3:
 		0.0,
 		(cell.y + 0.5) * cell_size
 	)
+
+
+func _make_polygon_room(
+	room: DungeonRoom,
+	color: Color
+) -> StaticBody3D:
+
+	var body := StaticBody3D.new()
+	body.name = "Room_%d_%d" % [
+		room.rect.position.x,
+		room.rect.position.y
+	]
+
+	var polygon := room.polygon
+
+	if polygon.size() < 3:
+		return _make_box(room.rect, color, "Room")
+
+	var vertices := PackedVector3Array()
+
+	# Konwersja 2D na 3D.
+	# W Godot oś Y jest wysokością.
+	# Oś Z odpowiada drugiej współrzędnej 2D.
+	for point in polygon:
+		vertices.append(Vector3(
+			point.x * cell_size,
+			0.0,
+			point.y * cell_size
+		))
+
+	# Triangulacja podłogi.
+	var indices := Geometry2D.triangulate_polygon(polygon)
+
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+
+	var mesh_vertices := PackedVector3Array()
+
+	for i in indices:
+		var point := polygon[i]
+		mesh_vertices.append(Vector3(
+			point.x * cell_size,
+			0.0,
+			point.y * cell_size
+		))
+
+	arrays[Mesh.ARRAY_VERTEX] = mesh_vertices
+
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(
+		Mesh.PRIMITIVE_TRIANGLES,
+		arrays
+	)
+
+	var mesh_instance := MeshInstance3D.new()
+	mesh_instance.mesh = mesh
+
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mesh_instance.material_override = mat
+
+	body.add_child(mesh_instance)
+
+	# Kolizja wypukła.
+	var collision := CollisionShape3D.new()
+	var shape := ConvexPolygonShape3D.new()
+
+	var collision_points := PackedVector3Array()
+
+	for point in polygon:
+		collision_points.append(Vector3(
+			point.x * cell_size,
+			-floor_thickness * 0.5,
+			point.y * cell_size
+		))
+		collision_points.append(Vector3(
+			point.x * cell_size,
+			floor_thickness * 0.5,
+			point.y * cell_size
+		))
+
+	shape.points = collision_points
+	collision.shape = shape
+	body.add_child(collision)
+
+	# Pozycja pokoju w świecie.
+	body.position = Vector3(
+		room.rect.position.x * cell_size,
+		0.0,
+		room.rect.position.y * cell_size
+	)
+
+	return body
 
 
 func _make_box(rect: Rect2i, color: Color, prefix: String) -> StaticBody3D:

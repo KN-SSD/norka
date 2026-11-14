@@ -5,30 +5,51 @@ extends RefCounted
 ## 2) Drzwi = przecięcie linii z obwodem
 ## 3) Extra drzwi → część w ekstra korytarze, reszta WFC
 ## Hub: korytarz ze środka okręgu do nearest. Farthest = liść MST (1 drzwi).
-
+@export_group("Rooms")
 @export var room_count: int = 8
 @export var room_min_size: Vector2i = Vector2i(4, 4)
 @export var room_max_size: Vector2i = Vector2i(10, 8)
+@export var room_padding: int = 2
+@export var max_placement_attempts: int = 40
+@export var sub_rectangles_min: int = 2
+@export var sub_rectangles_max: int = 5
+
+
+@export_group("Dungeon Shape")
 @export var inside_rad: float = 0.0
 @export var outside_rad: float = 28.0
 @export_range(1.0, 360.0, 0.1) var angle_size: float = 120.0
 @export var angle_offset: float = 0.0
-@export var room_padding: int = 2
+
+@export_group("Corridors")
 @export var corridor_width: int = 2
-@export var max_placement_attempts: int = 40
 @export var extra_corridors: int = 2
 @export var corridor_noise_amplitude: float = 2.5
 @export var corridor_noise_frequency: float = 0.12
-## Ile dodatkowych drzwi (poza MST/hub) próbować dołożyć na pokój.
+
+@export_group("Doors")
 @export var extra_doors_min: int = 1
 @export var extra_doors_max: int = 2
 @export var door_spacing: int = 2
 
-var _corridor_noise: FastNoiseLite
+@export_group("WFC")
+@export_range(0.0, 1.0, 0.01) var wfc_growth_min: float = 0.15
+@export_range(0.0, 1.0, 0.01) var wfc_growth_max: float = 0.85
+@export var wfc_max_cells_per_door: int = 80
+@export var wfc_bounds_padding: int = 20
 
+const DIRECTIONS: Array[Vector2i] = [
+	Vector2i.UP,
+	Vector2i.DOWN,
+	Vector2i.LEFT,
+	Vector2i.RIGHT
+]
+
+var _corridor_noise: FastNoiseLite
+var rng: RandomNumberGenerator
 
 func generate(seed_value: int = 0) -> DungeonData:
-	var rng := RandomNumberGenerator.new()
+	rng = RandomNumberGenerator.new()
 	if seed_value == 0:
 		rng.randomize()
 	else:
@@ -53,8 +74,118 @@ func generate(seed_value: int = 0) -> DungeonData:
 	_add_extra_doors(rng, data, nearest_i, farthest_i)
 	_add_extra_corridors(rng, data)
 	_mark_unused_doors_as_wfc(data)
+	_generate_wfc_branches(data)
 
 	return data
+
+
+
+# ---------------------------------------------------------------------------
+# Rooms
+# ---------------------------------------------------------------------------
+
+func _generate_room_polygon(size: Vector2i) -> PackedVector2Array:
+	var points: Array[Vector2] = []
+
+	var rectangle_count := rng.randi_range(3, 5)
+	var center := Vector2(size) * 0.5
+
+	for i in rectangle_count:
+		# Rozmiar pojedynczego prostokąta
+		var w := rng.randf_range(0.55, 0.85) * size.x
+		var h := rng.randf_range(0.55, 0.85) * size.y
+
+		# Przesunięcie względem środka pokoju
+		var offset := Vector2(
+			rng.randf_range(-0.18, 0.18) * size.x,
+			rng.randf_range(-0.18, 0.18) * size.y
+		)
+
+		var angle := deg_to_rad(
+			rng.randf_range(-8.0, 8.0)
+		)
+
+		var rect_center := center + offset
+		var half := Vector2(w, h) * 0.5
+
+		var corners := [
+			Vector2(-half.x, -half.y),
+			Vector2(half.x, -half.y),
+			Vector2(half.x, half.y),
+			Vector2(-half.x, half.y)
+		]
+
+		for corner in corners:
+			points.append(
+				rect_center + corner.rotated(angle)
+				)
+
+	var hull := _convex_hull(points)
+
+	# Normalizacja współrzędnych do rozmiaru pokoju
+	var min_point := hull[0]
+	var max_point := hull[0]
+
+	for p in hull:
+		min_point.x = minf(min_point.x, p.x)
+		min_point.y = minf(min_point.y, p.y)
+		max_point.x = maxf(max_point.x, p.x)
+		max_point.y = maxf(max_point.y, p.y)
+
+	var result := PackedVector2Array()
+
+	for p in hull:
+		var normalized := p - min_point
+
+		normalized.x = normalized.x / (max_point.x - min_point.x) * size.x
+		normalized.y = normalized.y / (max_point.y - min_point.y) * size.y
+
+		result.append(normalized)
+
+	return result
+
+func _convex_hull(points: Array[Vector2]) -> PackedVector2Array:
+	points.sort_custom(func(a: Vector2, b: Vector2):
+		if is_equal_approx(a.x, b.x):
+			return a.y < b.y
+		return a.x < b.x
+	)
+
+	var lower: Array[Vector2] = []
+
+	for p in points:
+		while lower.size() >= 2:
+			var a = lower[-2]
+			var b = lower[-1]
+
+			if (b - a).cross(p - b) <= 0.0:
+				lower.pop_back()
+			else:
+				break
+
+		lower.append(p)
+
+	var upper: Array[Vector2] = []
+
+	for i in range(points.size() - 1, -1, -1):
+		var p = points[i]
+
+		while upper.size() >= 2:
+			var a = upper[-2]
+			var b = upper[-1]
+
+			if (b - a).cross(p - b) <= 0.0:
+				upper.pop_back()
+			else:
+				break
+
+		upper.append(p)
+
+	lower.pop_back()
+	upper.pop_back()
+	lower.append_array(upper)
+
+	return PackedVector2Array(lower)
 
 
 # ---------------------------------------------------------------------------
@@ -65,7 +196,7 @@ func _place_rooms(rng: RandomNumberGenerator, data: DungeonData) -> void:
 	var count: int = maxi(1, room_count)
 	var r_in := minf(inside_rad, outside_rad)
 	var r_out := maxf(inside_rad, outside_rad)
-
+	
 	for i in count:
 		var placed := false
 		var base_angle := _arc_angle_deg(i, count)
@@ -77,15 +208,24 @@ func _place_rooms(rng: RandomNumberGenerator, data: DungeonData) -> void:
 			)
 
 			var angle_span := angle_size / float(maxi(1, count))
-			var angle_deg := base_angle + rng.randf_range(-angle_span * 0.35, angle_span * 0.35)
+			var angle_deg := base_angle + rng.randf_range(
+				-angle_span * 0.35,
+				angle_span * 0.35
+			)
+
 			var r := rng.randf_range(r_in, r_out)
-			r = minf(r_out + float(attempt) * 0.5, r + float(attempt) * 0.35)
+			r = minf(
+				r_out + float(attempt) * 0.5,
+				r + float(attempt) * 0.35
+			)
 
 			var center := _point_on_arc(angle_deg, r)
+
 			var pos := Vector2i(
 				int(round(center.x - size.x * 0.5)),
 				int(round(center.y - size.y * 0.5))
 			)
+
 			var candidate := Rect2i(pos, size)
 
 			if _overlaps_any(candidate, data.rooms, room_padding):
@@ -93,10 +233,13 @@ func _place_rooms(rng: RandomNumberGenerator, data: DungeonData) -> void:
 
 			var room := DungeonRoom.new()
 			room.rect = candidate
-			# Drzwi dopiero z Prima / huba / ekstra.
+			room.polygon = _generate_room_polygon(size)
+
 			data.rooms.append(room)
+
 			placed = true
 			break
+
 
 		if not placed:
 			push_warning("DungeonGenerator: nie udało się postawić pokoju %s." % i)
@@ -707,3 +850,183 @@ func _shuffle(rng: RandomNumberGenerator, items: Array) -> void:
 		var tmp = items[i]
 		items[i] = items[j]
 		items[j] = tmp
+
+
+# ---------------------------------------------------------------------------
+# WFC branches
+# ---------------------------------------------------------------------------
+
+func _generate_wfc_branches(data: DungeonData) -> void:
+	if data.rooms.is_empty():
+		return
+
+	var bounds := data.get_bounds().grow(wfc_bounds_padding)
+
+	# Zajęte komórki istniejących korytarzy.
+	var blocked: Dictionary = {}
+
+	for corridor in data.corridors:
+		for y in corridor.size.y:
+			for x in corridor.size.x:
+				var cell := corridor.position + Vector2i(x, y)
+				blocked[cell] = true
+
+	# Każde wolne drzwi WFC rozpoczynają osobną gałąź.
+	for room in data.rooms:
+		for door in room.doors:
+			if door.state != DungeonDoor.State.WFC:
+				continue
+
+			var growth := rng.randf_range(
+				wfc_growth_min,
+				wfc_growth_max
+			)
+
+			var outward := _wfc_cardinal_direction(door.outward)
+			var start := door.cell + outward
+
+			var cells := _wfc_generate_branch(
+				start,
+				growth,
+				bounds,
+				data.rooms,
+				blocked,
+				wfc_max_cells_per_door
+			)
+
+			# Dodaj wynik do korytarzy, żeby DungeonBuilder go narysował.
+			for cell in cells:
+				data.corridors.append(
+					Rect2i(cell, Vector2i.ONE)
+				)
+				blocked[cell] = true
+
+
+func _wfc_generate_branch(
+	start: Vector2i,
+	growth: float,
+	bounds: Rect2i,
+	rooms: Array[DungeonRoom],
+	blocked: Dictionary,
+	max_cells: int
+) -> Array[Vector2i]:
+
+	var result: Array[Vector2i] = []
+	var frontier: Array[Vector2i] = []
+
+	# Entropia każdego pola.
+	var entropy: Dictionary = {}
+
+	# Pola już rozpatrzone.
+	var visited: Dictionary = {}
+
+	_wfc_add_candidate(
+		start, frontier, entropy, visited,
+		bounds, rooms, blocked
+	)
+
+	while not frontier.is_empty() and result.size() < max_cells:
+
+		# Szukamy pola o najmniejszej entropii.
+		var best_index := -1
+		var best_entropy := INF
+
+		for i in frontier.size():
+			var cell: Vector2i = frontier[i]
+			var value: float = entropy[cell]
+
+			if value < best_entropy:
+				best_entropy = value
+				best_index = i
+
+		# Nie ma już dostępnych pól.
+		if best_index == -1 or is_inf(best_entropy):
+			break
+
+		var current: Vector2i = frontier.pop_at(best_index)
+		visited[current] = true
+
+		# Zajmujemy pole.
+		result.append(current)
+		blocked[current] = true
+
+		# Decyzja o dalszym rozroście.
+		# growth = 0.0: gałąź kończy się tutaj.
+		# growth = 1.0: gałąź zawsze próbuje rosnąć dalej.
+		if rng.randf() > growth:
+			continue
+
+		# Rozpatrz sąsiadów.
+		for dir in DIRECTIONS:
+			var next_cell := current + dir
+
+			_wfc_add_candidate(
+				next_cell,
+				frontier,
+				entropy,
+				visited,
+				bounds,
+				rooms,
+				blocked
+			)
+
+	return result
+
+
+func _wfc_add_candidate(
+	cell: Vector2i,
+	frontier: Array[Vector2i],
+	entropy: Dictionary,
+	visited: Dictionary,
+	bounds: Rect2i,
+	rooms: Array[DungeonRoom],
+	blocked: Dictionary
+) -> void:
+
+	if visited.has(cell) or entropy.has(cell):
+		return
+
+	if not bounds.has_point(cell):
+		return
+
+	# WFC nie może wejść do pokoju.
+	# Takie pole otrzymuje nieskończoną entropię.
+	if _wfc_inside_room(cell, rooms):
+		entropy[cell] = INF
+		frontier.append(cell)
+		return
+
+	# Nie wchodzimy w już wygenerowane korytarze.
+	if blocked.has(cell):
+		entropy[cell] = INF
+		frontier.append(cell)
+		return
+
+	# Zwykłe pole otrzymuje skończoną entropię.
+	entropy[cell] = rng.randf()
+	frontier.append(cell)
+
+
+func _wfc_inside_room(
+	cell: Vector2i,
+	rooms: Array[DungeonRoom]
+) -> bool:
+
+	for room in rooms:
+		if room.rect.has_point(cell):
+			return true
+
+	return false
+
+
+func _wfc_cardinal_direction(direction: Vector2i) -> Vector2i:
+	# Drzwi z połączeń Prim mogą mieć ukośny outward.
+	# WFC potrzebuje kierunku osiowego.
+
+	if direction == Vector2i.ZERO:
+		return Vector2i.RIGHT
+
+	if absi(direction.x) >= absi(direction.y):
+		return Vector2i(signi(direction.x), 0)
+
+	return Vector2i(0, signi(direction.y))

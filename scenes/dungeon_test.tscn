@@ -29,23 +29,29 @@ script = ExtResource("1_host")
 seed_value = 0
 room_count = 35
 room_min_size = Vector2i(10, 10)
-room_max_size = Vector2i(20, 20)
+room_max_size = Vector2i(30, 30)
+room_padding = 10
+max_placement_attempts = null
+sub_rectangles_min = null
+sub_rectangles_max = null
 inside_rad = 20.0
 outside_rad = 250.0
 angle_offset = 1.0
-room_padding = 10
 extra_corridors = 0
 corridor_noise_amplitude = 1.0
 corridor_noise_frequency = 1.0
 extra_doors_max = 3
 door_spacing = 10
+wfc_growth_min = 1.0
+wfc_growth_max = 1.0
+wfc_max_cells_per_door = 1000
+wfc_bounds_padding = 5
 
 [node name="DungeonBuilder" type="Node3D" parent="DungeonHost" unique_id=825073624]
 script = ExtResource("2_builder")
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=540025387]
 transform = Transform3D(0.707107, -0.40558, 0.579228, 0, 0.819152, 0.573576, -0.707107, -0.40558, 0.579228, 28, 36, 28)
-visible = false
 current = true
 fov = 50.0
 
